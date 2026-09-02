@@ -1,23 +1,37 @@
 {
   "name": "flyrank-capstone-metering-billing",
   "version": "1.0.0",
-  "description": "Usage metering and billing engine for the FlyRank Backend Capstone",
+  "description": "Production-minded usage metering and billing engine with idempotent usage tracking, quota enforcement, precise money math, PostgreSQL persistence, and Stripe test-mode subscriptions.",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "test": "vitest run"
+   "start": "node src/server.js",
+  "dev": "node --watch src/server.js",
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "db:migrate": "node src/db/migrate.js",
+  "db:seed": "node src/db/seed.js"
   },
+  "keywords": [
+    "backend",
+    "billing",
+    "metering",
+    "postgresql",
+    "stripe",
+    "idempotency",
+    "saas"
+  ],
+  "author": "Hammad Khan",
+  "license": "MIT",
   "dependencies": {
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "pg": "^8.23.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
     "pino": "^10.3.1",
-    "stripe": "^22.6.1",
+    "stripe": "^18.5.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "supertest": "^7.2.2",
+    "supertest": "^7.1.4",
     "vitest": "^4.1.11"
   }
 }

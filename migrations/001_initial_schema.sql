@@ -1,0 +1,2 @@
+-- Initial migration placeholder.
+-- Business schema will be added in the next migration phase.
