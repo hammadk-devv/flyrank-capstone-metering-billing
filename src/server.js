@@ -3,9 +3,14 @@ import express from "express";
 import pool from "./db/pool.js";
 import generateRouter from "./routes/generate.routes.js";
 import usageRouter from "./routes/usage.routes.js";
+import billingRouter from "./routes/billing.routes.js";
+import webhookRouter from "./routes/webhook.routes.js";
+import { startSubscriptionReconciliationJob } from "./jobs/subscription-reconciliation.job.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use("/webhooks/stripe", webhookRouter);
 
 app.use(express.json());
 
@@ -37,6 +42,9 @@ app.get("/health/db", async (_req, res) => {
 
 app.use(generateRouter);
 app.use(usageRouter);
+app.use(billingRouter);
+
+startSubscriptionReconciliationJob();
 
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
