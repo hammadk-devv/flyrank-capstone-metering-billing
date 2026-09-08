@@ -5,7 +5,10 @@ import { recordUsage } from "../services/meter.service.js";
 const router = Router();
 
 const generateSchema = z.object({
-  quantity: z.number().int().positive().default(1),
+  usageType: z.enum(["api_call", "ai_token"]).default("ai_token"),
+
+  quantity: z.number().int().positive().optional(),
+
   inputTokens: z.number().int().nonnegative().default(0),
   cachedInputTokens: z.number().int().nonnegative().default(0),
   outputTokens: z.number().int().nonnegative().default(0),
@@ -36,19 +39,51 @@ router.post("/generate", async (req, res) => {
     });
   }
 
+  const data = parsed.data;
+
+  let usageType = data.usageType;
+  let quantity = data.quantity;
+
+  if (usageType === "api_call") {
+    quantity = quantity ?? 1;
+  }
+
+  if (usageType === "ai_token") {
+    quantity =
+      data.quantity ??
+      (data.inputTokens +
+        data.outputTokens +
+        data.reasoningTokens);
+  }
+
+  if (!quantity || quantity <= 0) {
+    return res.status(400).json({
+      error: "Quantity must be a positive integer",
+    });
+  }
+
   try {
     const result = await recordUsage({
       tenantId,
-      usageType: "ai_token",
-      quantity:
-        parsed.data.inputTokens +
-        parsed.data.outputTokens +
-        parsed.data.reasoningTokens,
+      usageType,
+      quantity,
       idempotencyKey,
-      inputTokens: parsed.data.inputTokens,
-      cachedInputTokens: parsed.data.cachedInputTokens,
-      outputTokens: parsed.data.outputTokens,
-      reasoningTokens: parsed.data.reasoningTokens,
+
+      inputTokens:
+        usageType === "ai_token" ? data.inputTokens : null,
+
+      cachedInputTokens:
+        usageType === "ai_token"
+          ? data.cachedInputTokens
+          : null,
+
+      outputTokens:
+        usageType === "ai_token" ? data.outputTokens : null,
+
+      reasoningTokens:
+        usageType === "ai_token"
+          ? data.reasoningTokens
+          : null,
     });
 
     return res.status(200).json({
