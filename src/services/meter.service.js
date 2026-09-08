@@ -1,4 +1,5 @@
 import pool from "../db/pool.js";
+import { calculateAiCost } from "./cost.service.js";
 
 const USAGE_LIMIT_COLUMNS = {
   api_call: "api_call_limit",
@@ -10,6 +11,10 @@ export async function recordUsage({
   usageType,
   quantity,
   idempotencyKey,
+  inputTokens = null,
+  cachedInputTokens = null,
+  outputTokens = null,
+  reasoningTokens = null,
 }) {
   const limitColumn = USAGE_LIMIT_COLUMNS[usageType];
 
@@ -25,6 +30,19 @@ export async function recordUsage({
     throw new Error("Idempotency key is required");
   }
 
+  let costMicroUnits = 0;
+
+  if (usageType === "ai_token") {
+    const cost = calculateAiCost({
+      inputTokens: inputTokens ?? 0,
+      cachedInputTokens: cachedInputTokens ?? 0,
+      outputTokens: outputTokens ?? 0,
+      reasoningTokens: reasoningTokens ?? 0,
+    });
+
+    costMicroUnits = cost.totalCostMicroUnits;
+  }
+
   const client = await pool.connect();
 
   try {
@@ -38,6 +56,11 @@ export async function recordUsage({
           usage_type,
           quantity,
           idempotency_key,
+          input_tokens,
+          cached_input_tokens,
+          output_tokens,
+          reasoning_tokens,
+          cost_micro_units,
           created_at
         FROM usage_events
         WHERE tenant_id = $1
@@ -106,18 +129,38 @@ export async function recordUsage({
           tenant_id,
           usage_type,
           quantity,
-          idempotency_key
+          idempotency_key,
+          input_tokens,
+          cached_input_tokens,
+          output_tokens,
+          reasoning_tokens,
+          cost_micro_units
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING
           id,
           tenant_id,
           usage_type,
           quantity,
           idempotency_key,
+          input_tokens,
+          cached_input_tokens,
+          output_tokens,
+          reasoning_tokens,
+          cost_micro_units,
           created_at;
       `,
-      [tenantId, usageType, quantity, idempotencyKey],
+      [
+        tenantId,
+        usageType,
+        quantity,
+        idempotencyKey,
+        inputTokens,
+        cachedInputTokens,
+        outputTokens,
+        reasoningTokens,
+        costMicroUnits,
+      ],
     );
 
     await client.query("COMMIT");
@@ -138,6 +181,11 @@ export async function recordUsage({
             usage_type,
             quantity,
             idempotency_key,
+            input_tokens,
+            cached_input_tokens,
+            output_tokens,
+            reasoning_tokens,
+            cost_micro_units,
             created_at
           FROM usage_events
           WHERE tenant_id = $1

@@ -38,7 +38,8 @@ router.get("/usage", async (req, res) => {
               END
             ),
             0
-          )::BIGINT AS ai_tokens_used
+          )::BIGINT AS ai_tokens_used,
+          COALESCE(SUM(ue.cost_micro_units), 0)::BIGINT AS cost_micro_units
         FROM subscriptions s
         JOIN plans p ON p.id = s.plan_id
         LEFT JOIN usage_events ue
@@ -77,6 +78,9 @@ router.get("/usage", async (req, res) => {
       ai_tokens: {
         used: Number(row.ai_tokens_used),
         limit: Number(row.ai_token_limit),
+      },
+      cost: {
+        micro_units: Number(row.cost_micro_units),
       },
     });
   } catch (error) {

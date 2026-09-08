@@ -6,6 +6,10 @@ const router = Router();
 
 const generateSchema = z.object({
   quantity: z.number().int().positive().default(1),
+  inputTokens: z.number().int().nonnegative().default(0),
+  cachedInputTokens: z.number().int().nonnegative().default(0),
+  outputTokens: z.number().int().nonnegative().default(0),
+  reasoningTokens: z.number().int().nonnegative().default(0),
 });
 
 router.post("/generate", async (req, res) => {
@@ -35,9 +39,16 @@ router.post("/generate", async (req, res) => {
   try {
     const result = await recordUsage({
       tenantId,
-      usageType: "api_call",
-      quantity: parsed.data.quantity,
+      usageType: "ai_token",
+      quantity:
+        parsed.data.inputTokens +
+        parsed.data.outputTokens +
+        parsed.data.reasoningTokens,
       idempotencyKey,
+      inputTokens: parsed.data.inputTokens,
+      cachedInputTokens: parsed.data.cachedInputTokens,
+      outputTokens: parsed.data.outputTokens,
+      reasoningTokens: parsed.data.reasoningTokens,
     });
 
     return res.status(200).json({
