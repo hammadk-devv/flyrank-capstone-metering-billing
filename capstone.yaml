@@ -1,0 +1,33 @@
+name: flyrank-capstone-metering-billing
+version: 1.0.0
+
+run: npm run dev
+seed: npm run db:migrate && npm run db:seed
+test: npm test
+
+base_url: http://localhost:3000
+
+endpoints:
+  health:
+    method: GET
+    path: /health
+
+  database_health:
+    method: GET
+    path: /health/db
+
+  generate:
+    method: POST
+    path: /generate
+
+  usage:
+    method: GET
+    path: /usage
+
+  checkout:
+    method: POST
+    path: /billing/checkout
+
+  stripe_webhook:
+    method: POST
+    path: /webhooks/stripe
