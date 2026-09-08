@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import pool from "./db/pool.js";
 import generateRouter from "./routes/generate.routes.js";
+import usageRouter from "./routes/usage.routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -35,6 +36,7 @@ app.get("/health/db", async (_req, res) => {
 });
 
 app.use(generateRouter);
+app.use(usageRouter);
 
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
